@@ -1,0 +1,16 @@
+<%- include('partials-top') %>
+<section style="max-width:520px;margin:40px auto">
+  <div class="card">
+    <h2>Criar conta</h2>
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+    <form class="stack" method="post" action="/register">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Email</label>
+      <input name="email" type="email" required autocomplete="email">
+      <label>Password</label>
+      <input name="password" type="password" required minlength="8" autocomplete="new-password">
+      <button class="primary" type="submit">Criar conta</button>
+    </form>
+  </div>
+</section>
+<%- include('partials-bottom') %>

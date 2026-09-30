@@ -1,0 +1,70 @@
+<%- include('partials-top') %>
+<main>
+  <section class="hero">
+    <div>
+      <span class="badge">CS2 INVENTORY AUDIT</span>
+      <h1>Descobre o valor do teu <span class="grad">inventário CS2.</span></h1>
+      <p class="lead">
+        Snapshot automático do inventário + análise final com valor aproximado,
+        possíveis overpays e sugestões. Pagamento por MB WAY manual com confirmação no painel ADM. O MB WAY automático pode ser ativado mais tarde.
+      </p>
+      <div class="row">
+        <% if (user) { %>
+          <form method="post" action="/manual-checkout">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="primary" type="submit">Comprar por 10 € — MB WAY</button>
+          </form>
+          <% if (paymentReady) { %>
+            <form method="post" action="/checkout">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="secondary" type="submit">MB WAY automático</button>
+            </form>
+          <% } %>
+        <% } else { %>
+          <a class="btn primary" href="/register">Começar — 10 €</a>
+        <% } %>
+        <a class="btn secondary" href="<%= whatsapp %>?text=Boas%21%20Quero%20saber%20mais%20sobre%20a%20an%C3%A1lise%20CS2." target="_blank" rel="noopener">Falar no WhatsApp</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="muted small">PROMO DE LANÇAMENTO</div>
+      <div class="price">10 €</div>
+      <div class="muted">Pagamento único por análise.</div>
+      <hr>
+      <div class="muted">
+        ✓ Conta privada<br>
+        ✓ MB WAY para +351 962 250 419<br>
+        ✓ Confirmação manual segura no painel ADM<br>
+        ✓ Snapshot Steam automático<br>
+        ✓ Relatório final na área do cliente
+      </div>
+    </div>
+  </section>
+
+  <% if (!paymentReady) { %>
+    <div class="warn">
+      O MB WAY manual está disponível mesmo sem Mollie. O checkout automático fica para mais tarde.
+    </div>
+  <% } %>
+
+  <section>
+    <h2>Como funciona</h2>
+    <div class="grid3">
+      <div class="tile"><b>1. Pagas</b><p>O checkout abre diretamente MB WAY quando estiver ativo na tua conta Mollie.</p></div>
+      <div class="tile"><b>2. O servidor confirma</b><p>O pedido só é desbloqueado quando o estado real do pagamento aparece como pago.</p></div>
+      <div class="tile"><b>3. Recebes</b><p>Submetes o SteamID, recebes um snapshot automático e depois a análise final no painel.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Pagamento alternativo</h2>
+    <div class="card">
+      <p class="muted">Também aceitas transferência bancária. Por segurança, o IBAN não fica público.</p>
+      <a class="btn secondary" href="<%= whatsapp %>?text=Boas%21%20Quero%20pagar%20a%20an%C3%A1lise%20CS2%20por%20transfer%C3%AAncia.%20Podes%20enviar%20o%20IBAN%3F" target="_blank" rel="noopener">
+        Pedir IBAN pelo WhatsApp
+      </a>
+    </div>
+  </section>
+</main>
+<%- include('partials-bottom') %>

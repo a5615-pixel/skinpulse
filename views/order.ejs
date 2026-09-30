@@ -1,0 +1,714 @@
+<%- include('partials-top') %>
+
+<%
+  let steamValue = '—';
+  let quickValue = '—';
+  let foundPrices = '—';
+  let marketable = '—';
+  let itemLines = [];
+
+  if (order.auto_report) {
+
+    const steamMatch =
+      order.auto_report.match(
+        /Steam Market:\s*([^\n]+)/
+      );
+
+    const quickMatch =
+      order.auto_report.match(
+        /Venda rápida estimada\*?:\s*([^\n]+)/
+      );
+
+    const foundMatch =
+      order.auto_report.match(
+        /Preços encontrados:\s*([^\n]+)/
+      );
+
+    const marketableMatch =
+      order.auto_report.match(
+        /Itens marketable:\s*([^\n]+)/
+      );
+
+    if (steamMatch) {
+      steamValue =
+        steamMatch[1];
+    }
+
+    if (quickMatch) {
+      quickValue =
+        quickMatch[1];
+    }
+
+    if (foundMatch) {
+      foundPrices =
+        foundMatch[1];
+    }
+
+    if (marketableMatch) {
+      marketable =
+        marketableMatch[1];
+    }
+
+    const itemsPart =
+      order.auto_report
+        .split('ITENS COM PREÇO')[1];
+
+    if (itemsPart) {
+
+      const cleanItems =
+        itemsPart.split(
+          'REPETIDOS'
+        )[0];
+
+      itemLines =
+        cleanItems
+          .split('\n')
+          .map(
+            x => x.trim()
+          )
+          .filter(
+            x =>
+              x.startsWith('- ')
+          )
+          .slice(
+            0,
+            20
+          );
+    }
+  }
+%>
+
+
+<section>
+
+  <div
+    class="row"
+    style="
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:20px;
+    "
+  >
+
+    <div>
+
+      <div class="muted small">
+        SKINPULSE
+      </div>
+
+      <h2 style="margin-top:5px">
+        Pedido <%= order.id.slice(0,8) %>
+      </h2>
+
+      <div class="muted">
+        <%= order.product_name %>
+      </div>
+
+    </div>
+
+
+    <span class="status">
+      <%= order.status %>
+    </span>
+
+  </div>
+
+
+  <% if (
+    [
+      'created',
+      'pending',
+      'payment_error',
+      'failed',
+      'canceled',
+      'expired'
+    ].includes(order.status)
+  ) { %>
+
+    <div
+      class="warn"
+      style="margin-top:18px"
+    >
+      O pagamento ainda não está confirmado.
+    </div>
+
+
+    <% if (fakePayments) { %>
+
+      <form
+        method="post"
+        action="/dev/pay/<%= order.id %>"
+        style="margin-top:12px"
+      >
+
+        <input
+          type="hidden"
+          name="_csrf"
+          value="<%= csrfToken %>"
+        >
+
+        <button
+          class="secondary"
+          type="submit"
+        >
+          DEV: simular pagamento aprovado
+        </button>
+
+      </form>
+
+    <% } %>
+
+  <% } %>
+
+
+  <% if (
+    order.status ===
+      'awaiting_payment'
+  ) { %>
+
+    <section>
+
+      <div class="card">
+
+        <h3>
+          Pagamento MB WAY
+        </h3>
+
+        <p class="muted">
+          Envia 10,00 € para:
+        </p>
+
+        <div
+          class="price"
+          style="font-size:36px"
+        >
+          +351 962 250 419
+        </div>
+
+
+        <div
+          class="warn"
+          style="margin-top:18px"
+        >
+          Só carregues em "Já paguei"
+          depois de enviares realmente
+          o pagamento.
+        </div>
+
+
+        <form
+          class="stack"
+          method="post"
+          action="/order/<%= order.id %>/claim-manual-payment"
+          style="margin-top:18px"
+        >
+
+          <input
+            type="hidden"
+            name="_csrf"
+            value="<%= csrfToken %>"
+          >
+
+          <label>
+            Nome usado no MB WAY + hora
+          </label>
+
+          <input
+            name="paymentNote"
+            required
+            placeholder="Ex.: João Russo — 15:32"
+          >
+
+          <button
+            class="primary"
+            type="submit"
+          >
+            Já paguei
+          </button>
+
+        </form>
+
+      </div>
+
+    </section>
+
+  <% } %>
+
+
+  <% if (
+    order.status ===
+      'payment_claimed'
+  ) { %>
+
+    <div
+      class="warn"
+      style="margin-top:18px"
+    >
+      Pagamento indicado pelo cliente.
+      Estamos a confirmar se os 10,00 €
+      foram recebidos.
+    </div>
+
+  <% } %>
+
+
+  <% if (
+    [
+      'paid',
+      'submitted',
+      'delivered'
+    ].includes(order.status)
+  ) { %>
+
+
+    <div
+      class="ok"
+      style="margin-top:18px"
+    >
+      Pagamento confirmado ✅
+    </div>
+
+
+    <section>
+
+      <div class="card">
+
+        <h3>
+          Analisar inventário
+        </h3>
+
+        <p class="muted">
+
+          Coloca o SteamID64 ou o link
+          do perfil Steam.
+
+          O inventário precisa de estar
+          público.
+
+        </p>
+
+
+        <form
+          class="stack"
+          method="post"
+          action="/order/<%= order.id %>/inventory"
+        >
+
+          <input
+            type="hidden"
+            name="_csrf"
+            value="<%= csrfToken %>"
+          >
+
+          <label>
+            SteamID64 ou perfil Steam
+          </label>
+
+          <input
+            name="steam"
+            required
+            value="<%= order.steam_id || '' %>"
+            placeholder="7656119..."
+          >
+
+          <label>
+            Objetivo
+          </label>
+
+          <textarea
+            name="goal"
+            placeholder="Ex.: Quero vender rápido"
+          ><%= order.goal || '' %></textarea>
+
+          <button
+            class="primary"
+            type="submit"
+          >
+            Analisar inventário
+          </button>
+
+        </form>
+
+      </div>
+
+    </section>
+
+
+    <% if (order.auto_report) { %>
+
+      <section>
+
+        <div
+          style="
+            margin-bottom:20px;
+          "
+        >
+
+          <div class="muted small">
+            RESULTADO AUTOMÁTICO
+          </div>
+
+          <h2 style="margin-top:5px">
+            Resumo do inventário
+          </h2>
+
+        </div>
+
+
+        <div
+          class="grid3"
+          style="
+            margin-bottom:18px;
+          "
+        >
+
+          <div class="tile">
+
+            <div class="muted small">
+              VALOR STEAM
+            </div>
+
+            <div
+              style="
+                font-size:30px;
+                font-weight:950;
+                margin-top:7px;
+              "
+            >
+              <%= steamValue %>
+            </div>
+
+          </div>
+
+
+          <div class="tile">
+
+            <div class="muted small">
+              VENDA RÁPIDA
+            </div>
+
+            <div
+              style="
+                font-size:30px;
+                font-weight:950;
+                margin-top:7px;
+                color:var(--green);
+              "
+            >
+              <%= quickValue %>
+            </div>
+
+          </div>
+
+
+          <div class="tile">
+
+            <div class="muted small">
+              PREÇOS
+            </div>
+
+            <div
+              style="
+                font-size:30px;
+                font-weight:950;
+                margin-top:7px;
+              "
+            >
+              <%= foundPrices %>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="card">
+
+          <div
+            class="row"
+            style="
+              justify-content:space-between;
+              gap:20px;
+            "
+          >
+
+            <div>
+
+              <h3 style="margin-bottom:5px">
+                Itens do inventário
+              </h3>
+
+              <div class="muted small">
+                Marketable:
+                <%= marketable %>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <hr>
+
+
+          <% if (
+            itemLines.length
+          ) { %>
+
+            <div
+              style="
+                display:grid;
+                gap:12px;
+              "
+            >
+
+              <% itemLines.forEach(item => {
+
+                const cleanItem =
+                  item.replace(
+                    /^- /,
+                    ''
+                  );
+
+                const parts =
+                  cleanItem.split(
+                    '||IMG||'
+                  );
+
+                const itemText =
+                  parts[0]
+                    .trim();
+
+                const itemImage =
+                  parts[1]
+                    ? parts[1].trim()
+                    : null;
+
+              %>
+
+
+                <div
+                  style="
+                    display:flex;
+                    align-items:center;
+                    gap:16px;
+                    background:#090e16;
+                    border:1px solid var(--line);
+                    border-radius:15px;
+                    padding:12px 15px;
+                  "
+                >
+
+
+                  <div
+                    style="
+                      width:110px;
+                      min-width:110px;
+                      height:82px;
+                      display:flex;
+                      align-items:center;
+                      justify-content:center;
+                      background:
+                        radial-gradient(
+                          circle at center,
+                          #192638,
+                          #0b111a
+                        );
+                      border-radius:12px;
+                      overflow:hidden;
+                    "
+                  >
+
+                    <% if (itemImage) { %>
+
+                      <img
+                        src="<%= itemImage %>"
+                        alt="<%= itemText %>"
+                        loading="lazy"
+                        style="
+                          max-width:105px;
+                          max-height:78px;
+                          object-fit:contain;
+                        "
+                      >
+
+                    <% } else { %>
+
+                      <span
+                        style="
+                          font-size:30px;
+                          opacity:.4;
+                        "
+                      >
+                        🎮
+                      </span>
+
+                    <% } %>
+
+                  </div>
+
+
+                  <div
+                    style="
+                      flex:1;
+                      min-width:0;
+                    "
+                  >
+
+                    <div
+                      style="
+                        line-height:1.55;
+                        font-weight:700;
+                        word-break:break-word;
+                      "
+                    >
+                      <%= itemText %>
+                    </div>
+
+                  </div>
+
+
+                </div>
+
+
+              <% }) %>
+
+            </div>
+
+
+          <% } else { %>
+
+            <p class="muted">
+
+              Não foram encontrados
+              itens com preço.
+
+            </p>
+
+          <% } %>
+
+
+          <details
+            style="margin-top:22px"
+          >
+
+            <summary
+              style="
+                cursor:pointer;
+                font-weight:800;
+              "
+            >
+              Ver relatório técnico completo
+            </summary>
+
+
+            <%
+              const cleanTechnicalReport =
+                order.auto_report.replace(
+                  /\s*\|\|IMG\|\|https?:\/\/[^\s]+/g,
+                  ''
+                );
+            %>
+
+
+            <pre
+              class="report"
+              style="
+                margin-top:15px;
+                white-space:pre-wrap;
+              "
+            ><%= cleanTechnicalReport %></pre>
+
+
+          </details>
+
+        </div>
+
+      </section>
+
+    <% } %>
+
+
+    <section>
+
+      <h2>
+        Análise final
+      </h2>
+
+
+      <% if (
+        order.final_report
+      ) { %>
+
+        <div class="ok">
+          Análise entregue ✅
+        </div>
+
+        <pre
+          class="report"
+          style="
+            white-space:pre-wrap;
+            margin-top:15px;
+          "
+        ><%= order.final_report %></pre>
+
+
+      <% } else { %>
+
+        <div class="card">
+
+          <h3>
+            Revisão SkinPulse
+          </h3>
+
+          <p class="muted">
+
+            O valor automático já foi
+            calculado.
+
+            A análise final pode incluir
+            float, stickers, pattern,
+            possíveis overpays e sugestões
+            de venda.
+
+          </p>
+
+        </div>
+
+      <% } %>
+
+
+      <div
+        class="row"
+        style="margin-top:14px"
+      >
+
+        <a
+          class="btn secondary"
+          href="/order/<%= order.id %>/download"
+        >
+          Descarregar relatório
+        </a>
+
+
+        <a
+          class="btn secondary"
+          href="<%= whatsapp %>?text=Boas%21%20Tenho%20o%20pedido%20SkinPulse%20<%= order.id.slice(0,8) %>."
+          target="_blank"
+          rel="noopener"
+        >
+          WhatsApp
+        </a>
+
+      </div>
+
+    </section>
+
+
+  <% } %>
+
+
+</section>
+
+
+<%- include('partials-bottom') %>

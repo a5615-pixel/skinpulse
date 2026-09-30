@@ -1,0 +1,49 @@
+<%- include('partials-top') %>
+<section>
+  <div class="row" style="justify-content:space-between">
+    <div>
+      <h2>A minha conta</h2>
+      <div class="muted"><%= user.email %></div>
+    </div>
+
+    <form method="post" action="/manual-checkout">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="primary" type="submit">Nova análise — 10 € (MB WAY)</button>
+    </form>
+    <% if (paymentReady) { %>
+      <form method="post" action="/checkout">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="secondary" type="submit">MB WAY automático</button>
+      </form>
+    <% } else if (devMode) { %>
+      <a class="btn secondary" href="/dev/new-order">Criar pedido de teste</a>
+    <% } %>
+  </div>
+
+  <% if (orders.length === 0) { %>
+    <div class="card" style="margin-top:20px">
+      <h3>Ainda não tens pedidos</h3>
+      <p class="muted">Quando fizeres uma compra, o pedido aparece aqui.</p>
+      <% if (devMode) { %>
+        <p class="warn">Modo DEV ativo. Podes criar um pedido e simular o pagamento sem dinheiro.</p>
+        <a class="btn secondary" href="/dev/new-order">Criar pedido de teste</a>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div style="margin-top:20px">
+      <% orders.forEach(order => { %>
+        <a class="order" href="/order/<%= order.id %>">
+          <div>
+            <b><%= order.product_name %></b>
+            <div class="muted small"><%= order.id.slice(0,8) %> · <%= new Date(order.created_at).toLocaleString('pt-PT') %></div>
+          </div>
+          <div class="row">
+            <span class="status"><%= order.status %></span>
+            <b>10,00 €</b>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+<%- include('partials-bottom') %>

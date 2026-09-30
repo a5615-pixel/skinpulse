@@ -1,0 +1,26 @@
+<%- include('partials-top') %>
+<section>
+  <h2>Painel ADM</h2>
+  <p class="muted">Pedidos, pagamentos e entregas.</p>
+
+  <div class="card" style="overflow:auto">
+    <table>
+      <thead>
+        <tr><th>Pedido</th><th>Cliente</th><th>Estado</th><th>Steam</th><th>Data</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% orders.forEach(o => { %>
+          <tr>
+            <td><%= o.id.slice(0,8) %></td>
+            <td><%= o.email %></td>
+            <td><span class="status"><%= o.status %></span></td>
+            <td><%= o.steam_id || '-' %></td>
+            <td><%= new Date(o.created_at).toLocaleString('pt-PT') %></td>
+            <td><a class="btn secondary" href="/admin/order/<%= o.id %>">Abrir</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<%- include('partials-bottom') %>

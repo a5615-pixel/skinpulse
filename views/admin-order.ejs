@@ -1,0 +1,39 @@
+<%- include('partials-top') %>
+<section>
+  <h2>Pedido <%= order.id.slice(0,8) %></h2>
+  <div class="card">
+    <p><b>Cliente:</b> <%= order.email %></p>
+    <p><b>Estado:</b> <%= order.status %></p>
+    <p><b>SteamID:</b> <%= order.steam_id || '-' %></p>
+    <p><b>Objetivo:</b><br><span class="muted"><%= order.goal || '-' %></span></p>
+    <% if (order.auto_report) { %>
+      <h3>Snapshot</h3>
+      <pre class="report"><%= order.auto_report %></pre>
+    <% } %>
+
+    <% if (order.payment_method === 'mbway_manual' && ['awaiting_payment','payment_claimed'].includes(order.status)) { %>
+      <hr>
+      <h3>Confirmar MB WAY manual</h3>
+      <p class="muted"><b>Nota do cliente:</b> <%= order.manual_payment_note || 'Ainda não indicou que pagou.' %></p>
+      <div class="warn">
+        Só aproves depois de confirmares na tua aplicação/banco que recebeste realmente os 10,00 €.
+      </div>
+      <form method="post" action="/admin/order/<%= order.id %>/approve-manual-payment" style="margin-top:12px">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="primary" type="submit">Confirmo que recebi 10 €</button>
+      </form>
+    <% } %>
+  </div>
+
+  <section>
+    <div class="card">
+      <h3>Entregar relatório final</h3>
+      <form class="stack" method="post" action="/admin/order/<%= order.id %>/deliver">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <textarea name="finalReport" required placeholder="Cola aqui a análise final..."><%= order.final_report || '' %></textarea>
+        <button class="primary" type="submit">Guardar e marcar como entregue</button>
+      </form>
+    </div>
+  </section>
+</section>
+<%- include('partials-bottom') %>
